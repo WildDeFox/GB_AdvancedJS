@@ -41,4 +41,3 @@ function getArrowFunction() {
 }
 const arrowFunction = getArrowFunction.bind(user);
 arrowFunction()();
-debugger
