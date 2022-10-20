@@ -4,53 +4,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w==" crossorigin="anonymous" />
+    <title>Shop</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
     <script src="script.js"></script>
 </head>
 
 <body>
-    <div id="app">
-        <div class="header">
-            <div class="container">
-                <div class="leftHeader">
-                    <img src="images/logo.png" alt="">
-                </div>
-    
-                <div class="rightHeader">
-                    <img src="images/bars.png" alt="">
-                    <img class="userIcon" src="images/user.png" alt="">
-
-                    <search_input v-model="search"></search_input>
-                    <search_button v-on:click="filterItems"></search_button>
-    
-                    <span class="cartIconWrap" @click="setVisibleCart">
-                        <img class="cartIcon" src="images/cart.png" alt="">
-                        <!-- <span>0</span> -->
-                    </span>
-    
-                    <basket @close="setVisibleCart" v-if="isVisibleCart"></basket>
-                </div>
-            </div>
+    <div id="root">
+       <header>
+        <h1 class="title">Shop - {{search}}</h1>
+        <div class="search">
+            <search-component v-model="search"></search-component>
         </div>
-    
-        <div class="featured container">
-            <h2 class="featuredHeader">Fetured Items</h2>
-            <div class="featuredTitle">Shop for items based on what we featured in this week</div>
-    
-            <!-- //////////////////////////// -->
-            <div class="featuredItems">
-                <featured_item v-for="item in filteredItems" :item="item"></featured_item>
-            </div>
-            <div v-if="!filteredItems.length" class="not_date"><h2 class="not_date_text">Нет данных!</h2></div>
+        <div class="actions">
+            <custom-button v-on:click="setVisionCard">Корзина</custom-button>
         </div>
-        {{search}}
-        <my_footer></my_footer>
-
+       </header>
+       <main>
+        <div class="goods-list">
+            <goods-item v-for="item in filteredItems" v-bind:item="item"></goods-item>
+        </div>
+       </main>
+       <basket-goods v-if="cardIsVision" v-on:closeclick="setVisionCard"></basket-goods>
     </div>
-    
 </body>
-
 </html>

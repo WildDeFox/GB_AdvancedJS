@@ -1,144 +1,149 @@
-const BASE_URL = 'https://raw.githubusercontent.com/GeekBrainsTutorial/online-store-api/master/responses';
-const GET_GOODS_ITEMS = `${BASE_URL}/catalogData.json`;
+const BASE_URL = 'http://localhost:8000';
+const GET_GOODS_ITEMS = `${BASE_URL}/goods.json`;
+const GET_BASKET_GOODS = `${BASE_URL}/basket_goods`;
 
-// const url = `${URL}${GOODS}`;
-
-function service(url) {
-  return fetch(url).then((res) => res.json())
+function service(url, method="GET", body) {
+  return fetch(url, {
+    headers: Object.assign({}, body ? {
+      'Content-Type': 'application/json; charset=utf-8'
+    } : {}),
+    method,
+    body: JSON.stringify(body)
+  })
+  .then((res) => res.json())
 }
 
 function init() {
-
-  Vue.component('basket', {
-    template: `
-    <div class="basket">
-                        <div class="cl-btn-7" @click="$emit('close')"></div>
-                        <div class="basketRow basketHeader">
-                            <div>Название товара</div>
-                            <div>Количество</div>
-                            <div>Цена за шт.</div>
-                            <div>Итого</div>
-                        </div>
-                    
-                        <div class="basketTotal">
-                            Товаров в корзине на сумму:
-                            $<span class="basketTotalValue">0</span>
-                        </div>
-                    </div>
-    `
-  });
-
-  Vue.component('search_input', {
+  
+  Vue.component('search-component', {
     model: {
       prop: 'value',
       event: 'input'
     },
     props: {
-      value: ''
+      value: String
     },
-
     template: `
-    <input type="text" class="search" v-bind:value="value" v-on:input="$emit('input', $event.target.value)" >
+      <input type="text" class="goods-search" :value="value" @input="$emit('input', $event.target.value)" />
     `
   })
-
-  Vue.component('search_button', {
+  
+  
+  const CustomButton = Vue.component('custom-button', {
     template: `
-    <img class="searchIcon" src="images/search.png" alt="Поиск" v-on:click="$emit('click')">
+      <button class="search-button" type="button" v-on:click="$emit('click')">
+         <slot></slot>
+      </button>
     `
   })
-
-  Vue.component('featured_item', {
+  const basketGoods = Vue.component('basket-goods', {
+    data() {
+      return {
+         basketGoodsItems: []
+      }
+    },
+    
+    template: `
+      <div class="fixed-area">
+         <div class="basket-card">
+            <div class="basket-card__header">
+               <h1 class="basket-card__header__title">basket card</h1>
+               <div class="basket-card__header__delete-icon"
+                  v-on:click="$emit('closeclick')"
+               ></div>
+            </div>
+            <div class="basket-card__content">
+               <basket-goods-item v-for="item in basketGoodsItems" :item="item" @delete="deleteBasketGood" @add="addGood"></basket-goods-item>
+            </div>
+         </div>
+      </div>
+    `,
+    mounted() {
+      service(GET_BASKET_GOODS).then((data) => {
+        this.basketGoodsItems = data
+      })
+    },
+    methods: {
+      deleteBasketGood(id) {
+        service(GET_BASKET_GOODS, "DELETE", {
+          id
+        }).then((data) => {
+          this.basketGoodsItems = data
+        })
+      },
+      addGood(id) {
+        service(GET_BASKET_GOODS, 'PUT', {
+          id
+        }).then((data) => {
+          this.basketGoodsItems = data
+        })
+      }
+    }
+  })
+  
+  Vue.component('basket-goods-item', {
     props: [
       'item'
     ],
     template: `
-    <div class="featuredItem">
-      <div class="featuredImgWrap">
-        <img src="images/featured/1.jpg" alt="">
-        <div class="featuredImgDark">
-          <button class="addToCart">
-            <img src="images/cart.svg" alt="">
-            Add to Cart
-          </button>
-        </div>
+      <div class="basket-card__content___item">
+         <h3>{{item?.data?.product_name}}</h3>
+         <div>count: {{item?.count}}</div>
+         <div>total: {{item?.total}}</div>
+         <custom-button @click="$emit('add', item.data.id)">добавить</custom-button>
+         <custom-button @click="$emit('delete', item.data.id)">удалить</custom-button>
       </div>
-            
-      <div class="featuredData">
-        <div class="featuredName">
-          {{item.product_name}}
-        </div>
-        <div class="featuredText">
-          Known for her sculptural takes on traditional tailoring, Australian 
-          arbiter of cool Kym Ellery teams up with Moda Operandi.
-        </div>
-        <div class="featuredPrice">
-          {{item.price}}
-        </div>
-      </div>
-            
-    </div>
-    `
-  });
-
-  Vue.component('my_footer', {
-    data: function() {
-      return {
-        title: 'Footer'
-      }
-    },
-    template: `
-    <div class="footer">
-            <div class="container">
-                <div class="footerLeft">
-                    <a href="#">
-                        <i class="fab fa-facebook-f"></i>
-                    </a>
-                    <a href="#">
-                        <i class="fab fa-instagram"></i>
-                    </a>
-                    <a href="#">
-                        <i class="fab fa-pinterest-p"></i>
-                    </a>
-                    <a href="#">
-                        <i class="fab fa-twitter"></i>
-                    </a>
-                </div>
-                <div class="footerRight">
-                    &copy; 2021  Brand  All Rights Reserved.
-                </div>
-            </div>
-        </div>
     `
   })
-
+  
+  const goodsItem = Vue.component('goods-item', {
+    props: [
+       'item'
+    ],
+    template: `
+      <div class="goods-item">
+         <h3>{{ item.product_name }}</h3>
+         <p>{{ item.price }}</p>
+         <custom-button @click="addGood">добавить</custom-button>
+      </div>
+    `,
+    methods: {
+      addGood() {
+        service(GET_BASKET_GOODS, 'PUT', {
+          id: this.item.id
+        })
+      }
+    }
+  })
+  
   const app = new Vue({
-    el: '#app',
+    el: '#root',
     data: {
       items: [],
-      filteredItems: [],
       search: '',
-      isVisibleCart: false,
+      cardIsVision: false
     },
     methods: {
+      setVisionCard() {
+        this.cardIsVision = !this.cardIsVision
+      },
       fetchGoods() {
         service(GET_GOODS_ITEMS).then((data) => {
           this.items = data;
-          this.filteredItems = data;
         });
       },
-      filterItems() {
-        this.filteredItems = this.items.filter(({product_name}) => {
+      onSearchComponentChange(value) {
+        this.search = value
+      }
+    },
+    computed: {
+      filteredItems() {
+        return this.items.filter(({ product_name }) => {
           return product_name.match(new RegExp(this.search, 'gui'))
         })
       },
-      setVisibleCart() {
-        this.isVisibleCart = !this.isVisibleCart;
-      },
-    },
-    computed: {
       calculatePrice() {
-        return this.filteredItems.reduce((prev, {price}) => {
+        return this.items.reduce((prev, { price }) => {
           return prev + price;
         }, 0)
       }
@@ -148,5 +153,4 @@ function init() {
     }
   })
 }
-
-window.onload = init;
+window.onload = init
