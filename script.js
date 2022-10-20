@@ -1,3 +1,20 @@
+const URL = 'https://raw.githubusercontent.com/GeekBrainsTutorial/online-store-api/master/responses';
+const GOODS = '/catalogData.json';
+
+const url = `${URL}${GOODS}`;
+
+function service(url) {
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url);
+    xhr.onload = () => {
+      const result = JSON.parse(xhr.response)
+      resolve(result)
+  };
+  xhr.send()
+  })
+}
+
 const goods = [
   { title: 'Shirt', price: 150 },
   { title: 'Socks', price: 50 },
@@ -6,8 +23,8 @@ const goods = [
 ];
 
 class GoodsItem {
-  constructor({title = '', price = 0}) {
-    this.title = title;
+  constructor({product_name = '', price = 0}) {
+    this.product_name = product_name;
     this.price = price;
   }
 
@@ -26,7 +43,7 @@ class GoodsItem {
 
       <div class="featuredData">
         <div class="featuredName">
-          ${this.title}
+          ${this.product_name}
         </div>
         <div class="featuredText">
           Known for her sculptural takes on traditional tailoring, Australian 
@@ -45,7 +62,13 @@ class GoodsItem {
 class GoodsList {
   list = [];
   fetchGoods() {
-    this.list = goods;
+    return new Promise((resolve) => {
+      service(url).then((data) => {
+        this.list = data;
+        resolve();
+      });
+    })
+    
   }
 
   render(){
@@ -67,5 +90,6 @@ class GoodsList {
 }
 
 const goodsList = new GoodsList();
-goodsList.fetchGoods();
-goodsList.render();
+goodsList.fetchGoods().then(() => {
+  goodsList.render();
+})
